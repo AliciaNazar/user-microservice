@@ -8,6 +8,7 @@ import com.mindhub.user_microservice.models.UserEntity;
 import com.mindhub.user_microservice.repositories.UserRepository;
 import com.mindhub.user_microservice.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
@@ -70,9 +71,24 @@ public class UserServiceImpl implements UserService{
         if (email.isBlank()){
             throw new CustomException("Email can't be empty.");
         }
+        if (this.userRepository.existsByEmail(email)){
+            throw new CustomException("This email is already registered",HttpStatus.CONFLICT);
+        }
         if (!email.contains("@") || !email.contains(".")){
             throw new CustomException("Invalid email format.");
         }
+    }
+
+
+
+
+
+
+    @Override
+    public UserEntity getUserByEmail(String email) {
+        UserEntity user = userRepository.findByEmail(email)
+                .orElseThrow(()->new CustomException("User not found",HttpStatus.NOT_FOUND));
+        return user;
     }
 
 }

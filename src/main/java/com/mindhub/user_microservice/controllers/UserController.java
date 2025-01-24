@@ -2,6 +2,8 @@ package com.mindhub.user_microservice.controllers;
 
 import com.mindhub.user_microservice.dtos.UserDTO;
 import com.mindhub.user_microservice.dtos.UserDTORequest;
+import com.mindhub.user_microservice.exceptions.CustomException;
+import com.mindhub.user_microservice.models.UserEntity;
 import com.mindhub.user_microservice.services.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -61,5 +63,12 @@ public class UserController {
         this.userService.deleteUser(id);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("users/email/{email}")
+    public ResponseEntity<Long> getUserByEmail(@PathVariable String email) throws CustomException {
+        UserEntity user = userService.getUserByEmail(email);
+        return ResponseEntity.ok(user.getId());
+    }
+
 
 }
