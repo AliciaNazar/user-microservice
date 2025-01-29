@@ -109,5 +109,13 @@ public class UserServiceImpl implements UserService{
                 .orElseThrow(()->new CustomException("User not found",HttpStatus.NOT_FOUND));
         return user;
     }
+    @Override
+    public UserEntity getUserById(Long id) {
+        UserEntity user = userRepository.getUserById(id)
+                .orElseThrow(()->new CustomException("User not found",HttpStatus.NOT_FOUND));
+        return user;
+    }
+
+
 
 }

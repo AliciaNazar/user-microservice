@@ -82,5 +82,17 @@ public class UserController {
         return ResponseEntity.ok(user.getId());
     }
 
+    @Operation(summary = "Get user email by the provided id", description = "Retrieves the email of a user based on the provided id.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Email retrieved successfully."),
+            @ApiResponse(responseCode = "404", description = "User with the given id not found."),
+            @ApiResponse(responseCode = "400", description = "Invalid id format.")
+    })
+    @GetMapping("/{id}")
+    public ResponseEntity<String> getEmailById(@PathVariable Long id) {
+        UserEntity user = userService.getUserById(id);
+        return ResponseEntity.ok(user.getEmail());
+    }
+
 
 }
