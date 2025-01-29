@@ -28,14 +28,6 @@ public class UserController {
     private AmqpTemplate amqpTemplate;
 
 
-    @GetMapping("hola")
-    public ResponseEntity<String> getMessage(@RequestParam String message){
-        amqpTemplate.convertAndSend("testingExchange", "routing.key", message);
-        return ResponseEntity.ok("Message received");
-    }
-
-
-
     @Operation(summary = "Get all users", description = "Retrieve a list of all users.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Users retrieved successfully."),
