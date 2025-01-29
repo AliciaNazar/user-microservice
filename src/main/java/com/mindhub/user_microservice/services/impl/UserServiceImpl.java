@@ -1,12 +1,15 @@
 package com.mindhub.user_microservice.services.impl;
 
+import com.mindhub.user_microservice.config.RabbitMQConfig;
 import com.mindhub.user_microservice.dtos.UserDTO;
 import com.mindhub.user_microservice.dtos.UserDTORequest;
+import com.mindhub.user_microservice.events.EmailEvent;
 import com.mindhub.user_microservice.exceptions.CustomException;
 import com.mindhub.user_microservice.models.RolType;
 import com.mindhub.user_microservice.models.UserEntity;
 import com.mindhub.user_microservice.repositories.UserRepository;
 import com.mindhub.user_microservice.services.UserService;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -15,11 +18,20 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.amqp.core.*;
+
+
 @Service
 public class UserServiceImpl implements UserService{
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
+
+    @Autowired
+    private Queue userRegisteredQueue;
 
     @Override
     public List<UserDTO> getUsers() {
@@ -39,6 +51,13 @@ public class UserServiceImpl implements UserService{
         user.setEmail(userDTORequest.getEmail());
         user.setRoles(userDTORequest.getRoles());
         user = this.userRepository.save(user);
+
+        rabbitTemplate.convertAndSend(
+                RabbitMQConfig.EXCHANGE_NAME,
+                "user.email",
+                new EmailEvent(user.getEmail(), "Bienvenida/o a nuestra plataforma", "Gracias por registrarte " + user.getUsername()));
+
+
         return new UserDTO(user);
     }
 

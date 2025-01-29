@@ -8,6 +8,7 @@ import com.mindhub.user_microservice.services.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,12 +16,25 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private AmqpTemplate amqpTemplate;
+
+
+    @GetMapping("hola")
+    public ResponseEntity<String> getMessage(@RequestParam String message){
+        amqpTemplate.convertAndSend("testingExchange", "routing.key", message);
+        return ResponseEntity.ok("Message received");
+    }
+
+
 
     @Operation(summary = "Get all users", description = "Retrieve a list of all users.")
     @ApiResponses(value = {
