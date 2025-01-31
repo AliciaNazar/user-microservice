@@ -67,8 +67,16 @@ public class UserServiceImpl implements UserService{
     private void sendRegistrationEmail(UserEntity userEntity){
         String secret= "aG9sYWJ1ZW5kaWFjb21vdmF5b3NveWFsaWNpYW5hemFy";
         String jwt = jwtUtils.generateRegisterToken(userEntity.getId(), secret);
-        rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE_NAME, "user.email",
-                new EmailEvent(userEntity.getEmail(), "Welcome to our platform!","Thank you for registering " +userEntity.getUsername()+ "\nConfirm your user here: "+"http://localhost:8080/api/auth/register/"+jwt));
+        String confirmationLink = "http://localhost:8080/api/auth/register/" + jwt;
+
+        EmailEvent emailEvent = new EmailEvent(
+                userEntity.getEmail(),
+                "Welcome to our platform!",
+                confirmationLink,  // Solo enviamos el link
+                userEntity.getUsername() // Nuevo campo para el username
+        );
+
+        rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE_NAME, "user.email", emailEvent);
     }
 
     @Override
@@ -84,10 +92,6 @@ public class UserServiceImpl implements UserService{
             user.setRoles(registerUserDTO.getRoles());
             user = this.userRepository.save(user);
             sendRegistrationEmail(user);
-//            rabbitTemplate.convertAndSend(
-//                    RabbitMQConfig.EXCHANGE_NAME,
-//                    "user.email",
-//                    new EmailEvent(user.getEmail(), "Welcome to our platform!", "Thank you for registering " + user.getUsername()));
 
             log.info("User {} register successfully", user.getEmail());
             return new UserDTO(user);
@@ -155,12 +159,7 @@ public class UserServiceImpl implements UserService{
         return userRegistrationDTO;
     }
 
-//    @Override
-//    public UserEntity getUserByEmail(String email) {
-//        UserEntity user = userRepository.findByEmail(email)
-//                .orElseThrow(()->new CustomException("User not found",HttpStatus.NOT_FOUND));
-//        return user;
-//    }
+
     @Override
     public UserEntity getUserById(Long id) {
         UserEntity user = userRepository.getUserById(id)
