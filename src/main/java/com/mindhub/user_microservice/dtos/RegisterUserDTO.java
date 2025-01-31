@@ -3,40 +3,27 @@ package com.mindhub.user_microservice.dtos;
 import com.mindhub.user_microservice.models.RolType;
 import com.mindhub.user_microservice.models.UserEntity;
 
-public class UserDTO {
+public class RegisterUserDTO {
 
-    private Long id;
     private String username;
     private String email;
+    private String password;
     private RolType roles;
 
-    public UserDTO() {
+    public RegisterUserDTO() {
     }
 
-    public UserDTO(UserEntity user) {
-        this.id = user.getId();
+    public RegisterUserDTO(UserEntity user) {
         this.username = user.getUsername();
         this.email = user.getEmail();
         this.roles = user.getRoles();
-    }
-    public UserDTO(UserRegistrationDTO user) {
-        this.id = user.getId();
-        this.username = user.getUsername();
-        this.email = user.getEmail();
-        this.roles = user.getRole();
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
+        this.password = user.getPassword();
     }
 
     public String getUsername() {
         return username;
     }
+
 
     public void setUsername(String username) {
         this.username = username;
@@ -56,5 +43,13 @@ public class UserDTO {
 
     public void setRoles(RolType roles) {
         this.roles = roles;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 }

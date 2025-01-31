@@ -1,5 +1,8 @@
 package com.mindhub.user_microservice.controllers;
 
+import com.mindhub.user_microservice.config.JwtUtils;
+import com.mindhub.user_microservice.dtos.RegisterUserDTO;
+import com.mindhub.user_microservice.dtos.UpdateUserDTO;
 import com.mindhub.user_microservice.dtos.UserDTO;
 import com.mindhub.user_microservice.dtos.UserDTORequest;
 import com.mindhub.user_microservice.exceptions.CustomException;
@@ -8,10 +11,13 @@ import com.mindhub.user_microservice.services.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,71 +33,51 @@ public class UserController {
     @Autowired
     private AmqpTemplate amqpTemplate;
 
+    @Autowired
+    private JwtUtils jwtUtils;
 
-    @Operation(summary = "Get all users", description = "Retrieve a list of all users.")
+
+    @Operation(summary = "Get authenticated user", description = "Retrieves the currently authenticated user's details.")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Users retrieved successfully."),
+            @ApiResponse(responseCode = "200", description = "User retrieved successfully."),
+            @ApiResponse(responseCode = "401", description = "Unauthorized: The user is not authenticated.")
     })
-    @GetMapping
-    public ResponseEntity<List<UserDTO>> getUsers(){
-        List<UserDTO> users = this.userService.getUsers();
-        return ResponseEntity.ok(users);
+    @GetMapping("/user")
+    public ResponseEntity<UserDTO> getUser(HttpServletRequest request){
+        String email = jwtUtils.getEmailFromToken(request.getHeader("Authorization"));
+        UserDTO userDTO = new UserDTO(this.userService.getUserByEmail(email));
+        return ResponseEntity.ok(userDTO);
     }
 
-    @Operation(summary = "Register a new user", description = "Registers a new user in the system.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "User registered successfully."),
-            @ApiResponse(responseCode = "400", description = "Invalid input data."),
-    })
-    @PostMapping()
-    public ResponseEntity<UserDTO> createUser(@RequestBody UserDTORequest userDTORequest){
-        UserDTO userDTO = this.userService.createUser(userDTORequest);
-        return ResponseEntity.status(HttpStatus.CREATED).body(userDTO);
-    }
 
-    @Operation(summary = "Get all roles", description = "Retrieve a list of all roles.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Roles retrieved successfully."),
-    })
-    @GetMapping("/roles")
-    public ResponseEntity<List<String>> getAllRoles() {
-        List<String> roles = userService.getRoles();
-        return ResponseEntity.ok(roles);
-    }
-
-    @Operation(summary = "Delete a user by ID", description = "Deletes an existing user by the provided ID.")
+    @Operation(summary = "Delete authenticated user", description = "Deletes the currently authenticated user.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "User deleted successfully."),
+            @ApiResponse(responseCode = "401", description = "Unauthorized: The user is not authenticated."),
             @ApiResponse(responseCode = "404", description = "User not found.")
     })
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteUser(@PathVariable("id") Long id){
+    @DeleteMapping()
+    public ResponseEntity<?> deleteUser(HttpServletRequest request) {
+        String email = jwtUtils.getEmailFromToken(request.getHeader("Authorization"));
+        Long id = this.userService.getUserByEmail(email).getId();
         this.userService.deleteUser(id);
         return ResponseEntity.noContent().build();
     }
 
-    @Operation(summary = "Get User ID by Email", description = "Retrieves the ID of a user based on the provided email address.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "User ID retrieved successfully."),
-            @ApiResponse(responseCode = "404", description = "User with the given email not found."),
-            @ApiResponse(responseCode = "400", description = "Invalid email format.")
-    })
-    @GetMapping("/email/{email}")
-    public ResponseEntity<Long> getUserByEmail(@PathVariable String email) throws CustomException {
-        UserEntity user = userService.getUserByEmail(email);
-        return ResponseEntity.ok(user.getId());
-    }
 
-    @Operation(summary = "Get user email by the provided id", description = "Retrieves the email of a user based on the provided id.")
+    @Operation(summary = "Update authenticated user", description = "Updates the details of the currently authenticated user.")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Email retrieved successfully."),
-            @ApiResponse(responseCode = "404", description = "User with the given id not found."),
-            @ApiResponse(responseCode = "400", description = "Invalid id format.")
+            @ApiResponse(responseCode = "200", description = "User updated successfully."),
+            @ApiResponse(responseCode = "400", description = "Invalid input data."),
+            @ApiResponse(responseCode = "401", description = "Unauthorized: The user is not authenticated.")
     })
-    @GetMapping("/{id}")
-    public ResponseEntity<String> getEmailById(@PathVariable Long id) {
-        UserEntity user = userService.getUserById(id);
-        return ResponseEntity.ok(user.getEmail());
+    @PutMapping()
+    public ResponseEntity<UserDTO> updateUser(@RequestBody UpdateUserDTO updateUserDTO, HttpServletRequest request) {
+        String email = jwtUtils.getEmailFromToken(request.getHeader("Authorization"));
+        Long id = this.userService.getUserByEmail(email).getId();
+        UserDTO updatedUser = this.userService.updateUser(id, updateUserDTO);
+        return ResponseEntity.ok(updatedUser);
+
     }
 
 

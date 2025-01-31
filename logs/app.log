@@ -1,0 +1,1 @@
+2025-01-30 02:16:31 [http-nio-8081-exec-2] ERROR c.m.u.services.impl.UserServiceImpl - Username can't be empty.
